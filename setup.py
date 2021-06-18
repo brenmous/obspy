@@ -124,7 +124,6 @@ INSTALL_REQUIRES = [
     'lxml',
     'setuptools',
     'sqlalchemy',
-    'decorator',
     'requests']
 EXTRAS_REQUIRE = {
     'tests': ['flake8>=2', 'pyimgur', 'pyproj', 'pep8-naming'],
