@@ -13,7 +13,7 @@ Base class for all FDSN routers.
 """
 from multiprocessing.dummy import Pool as ThreadPool
 
-import decorator
+import functools
 import io
 import sys
 import traceback
@@ -71,18 +71,22 @@ def RoutingClient(routing_type, *args, **kwargs):  # NOQA
             "`iris-federator`, `eida-routing`" % routing_type)
 
 
-@decorator.decorator
 def _assert_filename_not_in_kwargs(f, *args, **kwargs):
-    if "filename" in kwargs:
-        raise ValueError("The `filename` argument is not supported")
-    return f(*args, **kwargs)
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+        if "filename" in kwargs:
+            raise ValueError("The `filename` argument is not supported")
+        return f(*args, **kwargs)
+    return wrapper
 
 
-@decorator.decorator
 def _assert_attach_response_not_in_kwargs(f, *args, **kwargs):
-    if "attach_response" in kwargs:
-        raise ValueError("The `attach_response` argument is not supported")
-    return f(*args, **kwargs)
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+        if "attach_response" in kwargs:
+            raise ValueError("The `attach_response` argument is not supported")
+        return f(*args, **kwargs)
+    return wrapper
 
 
 def _try_download_bulk(r):

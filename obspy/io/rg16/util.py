@@ -1,12 +1,11 @@
+import functools
 from codecs import encode
 import copy
-import decorator
 
 import numpy as np
 from obspy import Trace
 
 
-@decorator.decorator
 def _open_file(func, *args, **kwargs):
     """
     Ensure a file buffer is passed as first argument to the
@@ -16,17 +15,20 @@ def _open_file(func, *args, **kwargs):
         the first argument must be treated as a buffer.
     :return: callable
     """
-    first_arg = args[0]
-    try:
-        with open(first_arg, 'rb') as fi:
-            args = tuple([fi] + list(args[1:]))
-            return func(*args, **kwargs)
-    except TypeError:  # assume we have been passed a buffer
-        if not hasattr(args[0], 'read'):
-            raise  # type error was in function call, not in opening file
-        out = func(*args, **kwargs)
-        first_arg.seek(0)  # reset position to start of file
-    return out
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        first_arg = args[0]
+        try:
+            with open(first_arg, 'rb') as fi:
+                args = tuple([fi] + list(args[1:]))
+                return func(*args, **kwargs)
+        except TypeError:  # assume we have been passed a buffer
+            if not hasattr(args[0], 'read'):
+                raise  # type error was in function call, not in opening file
+            out = func(*args, **kwargs)
+            first_arg.seek(0)  # reset position to start of file
+        return out
+    return wrapper
 
 
 def _read(fi, position, length, dtype, left_part=True):

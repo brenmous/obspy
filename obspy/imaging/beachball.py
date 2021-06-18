@@ -27,11 +27,11 @@ Most source code provided here are adopted from
 """
 import io
 import warnings
+import functools
 
 import numpy as np
 from matplotlib import path as mplpath
 from matplotlib import collections, patches, transforms
-from decorator import decorator
 
 
 D2R = np.pi / 180
@@ -39,33 +39,35 @@ R2D = 180 / np.pi
 EPSILON = 0.00001
 
 
-@decorator
 def mopad_fallback(func, *args, **kwargs):
-    try:
-        result = func(*args, **kwargs)
-    except IndexError:
-        msg = "Encountered an exception while plotting the beachball. " \
-              "Falling back to the mopad wrapper which is slower but more " \
-              "stable."
-        warnings.warn(msg)
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            result = func(*args, **kwargs)
+        except IndexError:
+            msg = "Encountered an exception while plotting the beachball. " \
+                  "Falling back to the mopad wrapper which is slower but more " \
+                  "stable."
+            warnings.warn(msg)
 
-        # Could be done with the inspect module but this wrapper is only a
-        # single purpose wrapper and thus KISS.
-        arguments = ["fm", "linewidth", "facecolor", "bgcolor", "edgecolor",
-                     "alpha", "xy", "width", "size", "nofill", "zorder",
-                     "axes"]
+            # Could be done with the inspect module but this wrapper is only a
+            # single purpose wrapper and thus KISS.
+            arguments = ["fm", "linewidth", "facecolor", "bgcolor", "edgecolor",
+                         "alpha", "xy", "width", "size", "nofill", "zorder",
+                         "axes"]
 
-        final_kwargs = {}
-        for _i, arg in enumerate(args):
-            final_kwargs[arguments[_i]] = arg
+            final_kwargs = {}
+            for _i, arg in enumerate(args):
+                final_kwargs[arguments[_i]] = arg
 
-        final_kwargs.update(kwargs)
+            final_kwargs.update(kwargs)
 
-        from .mopad_wrapper import beach as _mopad_beach
+            from .mopad_wrapper import beach as _mopad_beach
 
-        result = _mopad_beach(**final_kwargs)
+            result = _mopad_beach(**final_kwargs)
 
-    return result
+        return result
+    return wrapper
 
 
 @mopad_fallback

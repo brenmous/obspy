@@ -11,10 +11,10 @@ Module for handling ObsPy Trace objects.
 import inspect
 import math
 import warnings
+import functools
 from copy import copy, deepcopy
 
 import numpy as np
-from decorator import decorator
 
 from obspy.core import compatibility
 from obspy.core.utcdatetime import UTCDateTime
@@ -254,34 +254,36 @@ class Stats(AttribDict):
         self.__setitem__('sampling_rate', state['sampling_rate'])
 
 
-@decorator
 def _add_processing_info(func, *args, **kwargs):
     """
     This is a decorator that attaches information about a processing call as a
     string to the Trace.stats.processing list.
     """
-    callargs = inspect.getcallargs(func, *args, **kwargs)
-    callargs.pop("self")
-    kwargs_ = callargs.pop("kwargs", {})
-    from obspy import __version__
-    info = "ObsPy {version}: {function}(%s)".format(
-        version=__version__,
-        function=func.__name__)
-    arguments = []
-    arguments += \
-        ["%s=%s" % (k, repr(v)) if not isinstance(v, str) else
-         "%s='%s'" % (k, v) for k, v in callargs.items()]
-    arguments += \
-        ["%s=%s" % (k, repr(v)) if not isinstance(v, str) else
-         "%s='%s'" % (k, v) for k, v in kwargs_.items()]
-    arguments.sort()
-    info = info % "::".join(arguments)
-    self = args[0]
-    result = func(*args, **kwargs)
-    # Attach after executing the function to avoid having it attached
-    # while the operation failed.
-    self._internal_add_processing_info(info)
-    return result
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        callargs = inspect.getcallargs(func, *args, **kwargs)
+        callargs.pop("self")
+        kwargs_ = callargs.pop("kwargs", {})
+        from obspy import __version__
+        info = "ObsPy {version}: {function}(%s)".format(
+            version=__version__,
+            function=func.__name__)
+        arguments = []
+        arguments += \
+            ["%s=%s" % (k, repr(v)) if not isinstance(v, str) else
+             "%s='%s'" % (k, v) for k, v in callargs.items()]
+        arguments += \
+            ["%s=%s" % (k, repr(v)) if not isinstance(v, str) else
+             "%s='%s'" % (k, v) for k, v in kwargs_.items()]
+        arguments.sort()
+        info = info % "::".join(arguments)
+        self = args[0]
+        result = func(*args, **kwargs)
+        # Attach after executing the function to avoid having it attached
+        # while the operation failed.
+        self._internal_add_processing_info(info)
+        return result
+    return wrapper
 
 
 class Trace(object):
