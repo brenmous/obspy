@@ -134,12 +134,13 @@ def skip_on_network_error(func, *args, **kwargs):
     return wrapper
 
 
-def uncompress_file(func, filename, *args, **kwargs):
+def uncompress_file(func, *args, **kwargs):
     """
     Decorator used for temporary uncompressing file if .gz or .bz2 archive.
     """
     @functools.wraps(func)
-    def wrapper(filename, *args, **kwargs):
+    def wrapper(*args, **kwargs):
+        filename = args[0]
         if not kwargs.get('check_compression', True):
             return func(filename, *args, **kwargs)
         if not isinstance(filename, str):
