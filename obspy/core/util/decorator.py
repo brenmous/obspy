@@ -196,7 +196,7 @@ def uncompress_file(func, *args, **kwargs):
             for obj in obj_list:
                 with NamedTemporaryFile() as tempfile:
                     tempfile._fileobj.write(obj)
-                    args = tuple([tempfile] + [arg for arg in args[1:])
+                    args = tuple([tempfile] + [arg for arg in args[1:]])
                     stream = func(tempfile.name, *args, **kwargs)
                     # just add other stream objects to first stream
                     if result is None:
