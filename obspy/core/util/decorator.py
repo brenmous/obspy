@@ -142,9 +142,9 @@ def uncompress_file(func, *args, **kwargs):
     def wrapper(*args, **kwargs):
         filename = args[0]
         if not kwargs.get('check_compression', True):
-            return func(filename, *args, **kwargs)
+            return func(*args, **kwargs)
         if not isinstance(filename, str):
-            return func(filename, *args, **kwargs)
+            return func(*args, **kwargs)
         elif not Path(filename).exists():
             msg = "File not found '%s'" % (filename)
             raise IOError(msg)
@@ -196,6 +196,7 @@ def uncompress_file(func, *args, **kwargs):
             for obj in obj_list:
                 with NamedTemporaryFile() as tempfile:
                     tempfile._fileobj.write(obj)
+                    args = tuple([tempfile] + [arg for arg in args[1:])
                     stream = func(tempfile.name, *args, **kwargs)
                     # just add other stream objects to first stream
                     if result is None:
@@ -204,7 +205,7 @@ def uncompress_file(func, *args, **kwargs):
                         result += stream
         else:
             # no compressions
-            result = func(filename, *args, **kwargs)
+            result = func(*args, **kwargs)
         return result
     return wrapper
 
