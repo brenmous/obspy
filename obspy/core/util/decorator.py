@@ -261,7 +261,7 @@ def map_example_filename(arg_kwarg_name):
     :param arg_kwarg_name: name of the arg/kwarg that should be (tried) to map
     """
     def _map_example_filename(func, *args, **kwargs):
-        @functools.wrap(func)
+        @functools.wraps(func)
         def wrapper(*args, **kwargs):
             prefix = '/path/to/'
             # check kwargs
